@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW" class="scroll-smooth">
 <head>
@@ -53,7 +52,7 @@
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
             transition: background-color 0.4s ease, color 0.4s ease;
         }
-        
+                
         .font-editorial-title {
             font-family: 'Noto Serif TC', serif;
         }
@@ -205,7 +204,6 @@
                 <!-- Live Profile Status Box -->
                 <div class="lg:col-span-4 bg-cream-100 dark:bg-editorial-cardDark p-6 rounded-2xl border editorial-border shadow-sm space-y-4">
                     <div class="flex items-center space-x-3 border-b editorial-border pb-3">
-                        <!-- 【圖片位置 1】：英雄區塊 - 作者個人頭像 (可替換 src 網址) -->
                         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Jane Lee" class="w-12 h-12 rounded-full object-cover ring-2 ring-editorial-accent/30">
                         <div>
                             <h3 class="font-editorial-title font-semibold text-stone-900 dark:text-stone-100 text-base">Jane Lee</h3>
@@ -428,7 +426,6 @@
 
                     <!-- Author Callout Box inside Modal -->
                     <div class="p-4 rounded-xl bg-cream-100 dark:bg-editorial-cardDark border editorial-border flex items-center space-x-4">
-                        <!-- 【圖片位置 2】：文章彈窗內 - 作者頭像 (可替換 src 網址) -->
                         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" class="w-12 h-12 rounded-full object-cover">
                         <div class="text-xs">
                             <h4 class="font-semibold text-stone-900 dark:text-stone-100">Jane Lee</h4>
@@ -527,18 +524,13 @@
                         readTime: '6 min',
                         rating: '4.9',
                         tags: ['時代記憶', '無名者', '台灣電影', '歷史重現'],
-                        
-                        // 【圖片位置 3】：文章封面圖片網址 (只需替換單引號內的圖片網址即可)
                         coverImage: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1200&q=80',
-                        
-                        // 【圖片位置 4】：內文照片插入範例 - 可直接在 content HTML 字串中寫入 <img> 標籤
                         content: `
                             <p class="drop-cap">在絕望與無力籠罩的日常裡，因為一部作品，我重新走進了這片土地上曾經真實發生的至暗時刻。</p>
                             
                             <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">一、 轉動指針：那是苦難時代裡，集體的信念與希望</h3>
                             <p>逃亡途中的育雲，眼神在模糊的塵土下亮得驚人。他留給妹妹阿月一隻手錶，並說下那段指針定律：「如果覺得現在太艱難，就轉動指針，想像未來的光景。困難都會過去的，會有好日子的……」</p>
                             
-                            <!-- 內文配圖範例 -->
                             <figure class="my-6">
                                 <img src="https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1000&q=80" alt="電影劇照與劇照側記" class="w-full rounded-xl object-cover shadow-sm">
                                 <figcaption class="text-xs text-center text-stone-400 mt-2 font-serif italic">劇照側記：轉動指針的時刻</figcaption>
@@ -550,7 +542,7 @@
                             <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 壞世道裡的良心：趙公道的無奈與堅守</h3>
                             <p>「我不是一個好人，但我有良心。」當趙公道對當舖的人說出這句話時，道盡了大時代下小人物的無奈。</p>
                             <p>他不是完美無瑕的英雄。他會因為承受不住酷刑而供出兄弟，卻也會為了守住承諾，拼死將兄弟的遺指帶回故鄉；多年後在醫院重逢，他遞出的手錶雖已非當年那隻，卻依然找了最相似的樣式。</p>
-                            <p>對阿月而言，手錶是對未來的寄託與對兄長的懷想；對趙公道而言，那隻錶則是惦念，是他在濁世裡未曾泯滅的良心。在漫長的黑夜裡，能守住這一點良心，就已經是個極好極好的人了。</p>
+                            <p>對阿月而言，手錶是對未來的寄託與對兄長懷想；對趙公道而言，那隻錶則是惦念，是他在濁世裡未曾泯滅的良心。在漫長的黑夜裡，能守住這一點良心，就已經是個極好極好的人了。</p>
 
                             <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">三、 不成雲，便化為霧：給所有無名者的溫柔情書</h3>
                             <p>生命的最後，育雲寫下了一封截然不同的家書：故事裡的水滴沒有成功變成雲朵，而是凝結成霧，化為一道風景後悄然散去。</p>
@@ -576,7 +568,7 @@
 
                             <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">一、 堆疊的睫毛與塗抹的口紅：對「想要更美」的無盡追求</h3>
                             <p>在這個「服美役」的時代，人們對美的標準愈漸嚴苛。看著化妝台上琳瑯滿目的彩妝時，心中總有一個聲音說著：「今天如果能更美地出門就好了。」化妝比不化妝美、睫毛夾翹比沒刷更靈動、有了口紅與臥蠶，整個人便有了精神。每一個完妝的背後，都是一層又一層對「美」的無盡追求。</p>
-                            <p>正因如此，儘管《懼裂》的故事設定荒誕極端，我卻能完美共感主角伊莉莎白內心的每一次痛苦與掙扎。當鏡頭赤裸地掃視著母體與分體，我的第一個念頭竟也是：「時間帶來的變化，真的有差。」隨後，我被自己的想法所震驚——原來我也正在凝視女人的身體，正在比較、羨慕與嫉妒。</p>
+                            <p>正因如此，儘管《懼裂》的故事設定荒誕極端，我卻能完美共感主角伊莉莎白內心的每一次痛苦與掙扎。當鏡頭赤裸地掃視著母體與分體，我的第一個念頭竟也是：「時間帶來的變化，真的有差。」隨後，我被自己的想法所震驚——原來我也正在凝視女人的身體，正在比較、羨慕與嫉嫉。</p>
                             <p>即便那是「曾經的自己」又如何？我們不也常懷念或渴望某個特定時期的自己嗎？這種慾望不僅限於女性的外貌，而是人性最本能的貪婪：對未竟之事的追求，對已逝之物的執念，永遠無邊無際。</p>
 
                             <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 熬夜與透支的日常：人對自己能有多殘忍？</h3>
@@ -682,7 +674,7 @@
                             <p>舊照片、髮髻、算盤、高跟鞋，乃至那一盞紅紗燈……琦君將成長過程中珍藏的記憶細心封存。這些平凡物件就像是一座座橋樑，讓發生於當下的美好時光得以延續，成為向未來邁進時最堅定的基底。</p>
 
                             <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 懷舊不是止步不前，而是前行的勇氣</h3>
-                            <p>「拂不去舊事，給予我更多的信心和毅力。」曾以為總愛懷想過去的自己是沉溺於舊夢；讀完《紅紗燈》才豁然開朗——懷念過去與展望未來從不衝突。無論好壞，那些過往都將拼貼成人生中最美的畫作。</p>
+                            <p>「拂不住舊事，給予我更多的信心和毅力。」曾以為總愛懷想過去的自己是沉溺於舊夢；讀完《紅紗燈》才豁然開朗——懷念過去與展望未來從不衝突。無論好壞，那些過往都將拼貼成人生中最美的畫作。</p>
 
                             <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">三、 記憶的永恆：在平凡的碎片裡動容</h3>
                             <p>習慣用日記與鏡頭記錄日常的我，翻閱備忘錄與舊照片時，仍會為那些看似平凡的瑣碎小事而落淚。即使有些人已不再相見，但深刻感動的那一刻，記憶便已成永恆。</p>
