@@ -1,1 +1,838 @@
-# 9an1ee
+
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mezhism | Jane Lee</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js for lightweight state management -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Noto+Serif+TC:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cream: {
+                            50: '#FCFBF7',
+                            100: '#F7F5EE',
+                            200: '#EFECE1',
+                            300: '#E2DEC2',
+                            800: '#2A2926',
+                            900: '#1A1917'
+                        },
+                        editorial: {
+                            dark: '#121212',
+                            cardDark: '#1E1E20',
+                            accent: '#B05B3B',
+                            accentDark: '#D4A373',
+                            muted: '#71717A'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Noto Serif TC"', 'Cinzel', 'serif'],
+                        sans: ['Inter', '"Noto Sans TC"', 'sans-serif'],
+                        brand: ['Cinzel', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+        
+        .font-editorial-title {
+            font-family: 'Noto Serif TC', serif;
+        }
+
+        .editorial-border {
+            border-color: rgba(160, 150, 135, 0.25);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #A1A1AA;
+            border-radius: 3px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #3F3F46;
+        }
+
+        /* Drop cap styling */
+        .drop-cap::first-letter {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 3.2rem;
+            float: left;
+            line-height: 0.8;
+            padding-right: 0.5rem;
+            padding-top: 0.2rem;
+            font-weight: 700;
+            color: #B05B3B;
+        }
+        .dark .drop-cap::first-letter {
+            color: #D4A373;
+        }
+    </style>
+</head>
+
+<body x-data="appData()" :class="darkMode ? 'dark bg-editorial-dark text-gray-100' : 'bg-cream-50 text-cream-900'" class="min-h-screen flex flex-col selection:bg-stone-300 dark:selection:bg-stone-800">
+
+    <!-- Toast Notification -->
+    <div x-show="toast.show" 
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="opacity-0 translate-y-4"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-4"
+         class="fixed bottom-6 right-6 z-50 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 px-5 py-3 rounded-full shadow-2xl text-sm font-medium flex items-center space-x-3">
+        <i class="fa-solid" :class="toast.icon || 'fa-circle-check'"></i>
+        <span x-text="toast.message"></span>
+    </div>
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="sticky top-0 z-30 backdrop-blur-md border-b editorial-border transition-colors bg-cream-50/80 dark:bg-editorial-dark/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Brand Title -->
+                <a @click="resetFilters()" href="#" class="flex flex-col group">
+                    <span class="font-brand text-2xl tracking-[0.25em] font-bold text-stone-900 dark:text-stone-100 group-hover:opacity-75 transition-opacity">mezhism</span>
+                    <span class="text-[10px] tracking-[0.3em] uppercase text-stone-500 dark:text-stone-400 -mt-1">by Jane Lee</span>
+                </a>
+
+                <!-- Desktop Navigation Tabs -->
+                <nav class="hidden md:flex items-center space-x-8 text-sm tracking-widest font-serif">
+                    <template x-for="cat in categories" :key="cat">
+                        <button @click="activeCategory = cat; selectedTag = ''" 
+                                :class="activeCategory === cat ? 'text-stone-900 dark:text-stone-100 border-b-2 border-editorial-accent dark:border-editorial-accentDark font-semibold' : 'text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'"
+                                class="py-2 transition-all duration-200 uppercase"
+                                x-text="cat">
+                        </button>
+                    </template>
+                </nav>
+
+                <!-- Actions: Search, Bookmark Drawer Toggle, Dark Mode -->
+                <div class="flex items-center space-x-4">
+                    <!-- Search button -->
+                    <button @click="searchOpen = !searchOpen" class="p-2 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors" title="搜尋文章">
+                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                    </button>
+
+                    <!-- Bookmarks Toggle -->
+                    <button @click="activeCategory = '我的收藏'" class="relative p-2 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors" title="個人收藏">
+                        <i class="fa-solid fa-bookmark text-lg" :class="activeCategory === '我的收藏' ? 'text-editorial-accent dark:text-editorial-accentDark' : ''"></i>
+                        <span x-show="bookmarks.length > 0" x-text="bookmarks.length" class="absolute -top-1 -right-1 bg-editorial-accent dark:bg-editorial-accentDark text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-sans"></span>
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button @click="toggleTheme()" class="p-2 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors" title="切換主題">
+                        <i class="fa-solid" :class="darkMode ? 'fa-sun text-amber-400' : 'fa-moon text-stone-700'"></i>
+                    </button>
+
+                    <!-- Mobile Menu Trigger -->
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 text-stone-600 dark:text-stone-300">
+                        <i class="fa-solid text-xl" :class="mobileMenuOpen ? 'fa-xmark' : 'fa-bars'"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Expandable Search Input -->
+            <div x-show="searchOpen" x-transition class="py-4 border-t editorial-border">
+                <div class="relative max-w-xl mx-auto">
+                    <input type="text" x-model="searchQuery" placeholder="輸入關鍵字，搜尋文章標題或內文..." 
+                           class="w-full pl-10 pr-10 py-2.5 rounded-full bg-stone-100 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-editorial-accent dark:focus:ring-editorial-accentDark text-sm">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-stone-400 text-sm"></i>
+                    <button x-show="searchQuery" @click="searchQuery = ''" class="absolute right-4 top-3.5 text-stone-400 hover:text-stone-600">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div x-show="mobileMenuOpen" x-transition class="md:hidden border-t editorial-border bg-cream-100 dark:bg-editorial-cardDark px-4 pt-2 pb-6 space-y-3">
+            <template x-for="cat in categories" :key="cat">
+                <button @click="activeCategory = cat; selectedTag = ''; mobileMenuOpen = false" 
+                        :class="activeCategory === cat ? 'bg-stone-200 dark:bg-stone-700 font-semibold' : ''"
+                        class="block w-full text-left px-3 py-2 rounded-md text-base font-serif text-stone-800 dark:text-stone-200"
+                        x-text="cat">
+                </button>
+            </template>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Editorial Hero Banner / Profile -->
+        <section class="mb-12 border-b editorial-border pb-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <!-- Hero Intro Text -->
+                <div class="lg:col-span-8 space-y-4">
+                    <div class="inline-flex items-center space-x-2 text-xs tracking-widest uppercase text-editorial-accent dark:text-editorial-accentDark font-semibold">
+                        <span class="w-8 h-[1px] bg-editorial-accent dark:bg-editorial-accentDark"></span>
+                        <span>Personal Journal & Critique</span>
+                    </div>
+                    <h1 class="font-editorial-title text-3xl sm:text-5xl font-light text-stone-900 dark:text-stone-50 leading-tight">
+                        在時代的黑夜與日常瑣碎裡，<br class="hidden sm:inline">尋找那一抹溫柔微光。
+                    </h1>
+                    <p class="text-stone-600 dark:text-stone-400 text-sm sm:text-base leading-relaxed max-w-2xl font-light">
+                        我是 <strong class="text-stone-900 dark:text-stone-100 font-medium">Jane Lee</strong>。這裡是 <span class="font-brand font-semibold">mezhism</span> —— 紀錄電影微光、散文閱讀、展覽留下與生活隨筆的時尚極簡空間。文字是側錄生命的底片，即便凝結成霧，亦是值得被記錄的風景。
+                    </p>
+                </div>
+
+                <!-- Live Profile Status Box -->
+                <div class="lg:col-span-4 bg-cream-100 dark:bg-editorial-cardDark p-6 rounded-2xl border editorial-border shadow-sm space-y-4">
+                    <div class="flex items-center space-x-3 border-b editorial-border pb-3">
+                        <!-- 【圖片位置 1】：英雄區塊 - 作者個人頭像 (可替換 src 網址) -->
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Jane Lee" class="w-12 h-12 rounded-full object-cover ring-2 ring-editorial-accent/30">
+                        <div>
+                            <h3 class="font-editorial-title font-semibold text-stone-900 dark:text-stone-100 text-base">Jane Lee</h3>
+                            <p class="text-xs text-stone-500 dark:text-stone-400 tracking-wider">@mezhism</p>
+                        </div>
+                    </div>
+                    <!-- Status items -->
+                    <div class="space-y-2.5 text-xs">
+                        <div class="flex items-center space-x-2 text-stone-600 dark:text-stone-300">
+                            <i class="fa-solid fa-book-open text-editorial-accent dark:text-editorial-accentDark w-4"></i>
+                            <span class="text-stone-400">正在閱讀：</span>
+                            <span class="font-medium truncate">琦君《紅紗燈》</span>
+                        </div>
+                        <div class="flex items-center space-x-2 text-stone-600 dark:text-stone-300">
+                            <i class="fa-solid fa-film text-editorial-accent dark:text-editorial-accentDark w-4"></i>
+                            <span class="text-stone-400">最新觀影：</span>
+                            <span class="font-medium truncate">《大濛》</span>
+                        </div>
+                        <div class="flex items-center space-x-2 text-stone-600 dark:text-stone-300">
+                            <i class="fa-solid fa-pen-nib text-editorial-accent dark:text-editorial-accentDark w-4"></i>
+                            <span class="text-stone-400">當前狀態：</span>
+                            <span class="font-medium truncate">在無名者的故事裡尋找良心</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- FILTER & TAG BAR -->
+        <section class="mb-8 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                
+                <!-- Category Pills (Mobile/Quick switch) -->
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="cat in categories" :key="cat">
+                        <button @click="activeCategory = cat; selectedTag = ''" 
+                                :class="activeCategory === cat ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-medium' : 'bg-stone-200/60 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-700'"
+                                class="px-3.5 py-1.5 rounded-full text-xs transition-colors duration-200">
+                            <span x-text="cat"></span>
+                            <span x-show="cat === '我的收藏'" class="ml-1 text-[10px]" x-text="'(' + bookmarks.length + ')'"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- Active Filter Indicator / Reset -->
+                <div class="flex items-center space-x-2 text-xs text-stone-500">
+                    <span x-text="filteredArticles.length + ' 篇文章'"></span>
+                    <button x-show="selectedTag || searchQuery || activeCategory !== '全部'" 
+                            @click="resetFilters()" 
+                            class="text-editorial-accent dark:text-editorial-accentDark hover:underline ml-2">
+                        <i class="fa-solid fa-arrow-rotate-left mr-1"></i>清除篩選
+                    </button>
+                </div>
+            </div>
+
+            <!-- Popular Tag Cloud -->
+            <div class="flex items-center space-x-2 overflow-x-auto py-2 no-scrollbar text-xs">
+                <span class="text-stone-400 dark:text-stone-500 flex-shrink-0 font-serif"><i class="fa-solid fa-tags mr-1"></i>熱門標籤：</span>
+                <template x-for="tag in allTags" :key="tag">
+                    <button @click="selectedTag = (selectedTag === tag ? '' : tag)"
+                            :class="selectedTag === tag ? 'ring-2 ring-editorial-accent text-editorial-accent font-semibold' : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'"
+                            class="px-2.5 py-1 rounded-md bg-stone-100 dark:bg-stone-800/80 flex-shrink-0 transition-all"
+                            x-text="'#' + tag">
+                    </button>
+                </template>
+            </div>
+        </section>
+
+        <!-- ARTICLES GRID LAYOUT -->
+        <section class="min-h-[400px]">
+            
+            <!-- Empty state -->
+            <div x-show="filteredArticles.length === 0" class="text-center py-20 bg-cream-100/50 dark:bg-editorial-cardDark/50 rounded-2xl border border-dashed editorial-border">
+                <i class="fa-solid fa-newspaper text-4xl text-stone-300 dark:text-stone-600 mb-4"></i>
+                <h3 class="font-editorial-title text-lg text-stone-700 dark:text-stone-300 mb-1">找不到相關內容</h3>
+                <p class="text-xs text-stone-500">嘗試調整搜尋關鍵字、切換分類或重置篩選。</p>
+                <button @click="resetFilters()" class="mt-4 px-4 py-2 bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 rounded-full text-xs font-medium hover:opacity-90 transition">
+                    返回所有文章
+                </button>
+            </div>
+
+            <!-- Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <template x-for="article in filteredArticles" :key="article.id">
+                    <article class="group bg-white dark:bg-editorial-cardDark rounded-2xl border editorial-border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+                        <div>
+                            <!-- Card Image Banner -->
+                            <div class="relative h-52 overflow-hidden bg-stone-200 dark:bg-stone-800 cursor-pointer" @click="openArticleModal(article)">
+                                <img :src="article.coverImage" :alt="article.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.95] dark:brightness-90">
+                                
+                                <!-- Category Badge -->
+                                <span class="absolute top-3 left-3 bg-stone-900/80 dark:bg-stone-100/90 backdrop-blur-sm text-white dark:text-stone-900 text-[10px] font-medium tracking-widest px-2.5 py-1 rounded-full uppercase" x-text="article.category"></span>
+
+                                <!-- Bookmark Heart Button -->
+                                <button @click.stop="toggleBookmark(article.id)" 
+                                        class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm flex items-center justify-center text-stone-700 dark:text-stone-200 hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-heart text-sm" :class="isBookmarked(article.id) ? 'text-rose-500' : 'text-stone-400 hover:text-rose-400'"></i>
+                                </button>
+                            </div>
+
+                            <!-- Card Body -->
+                            <div class="p-6 space-y-3 cursor-pointer" @click="openArticleModal(article)">
+                                <div class="flex items-center justify-between text-[11px] text-stone-400">
+                                    <span x-text="article.date"></span>
+                                    <span><i class="fa-regular fa-clock mr-1"></i><span x-text="article.readTime"></span></span>
+                                </div>
+
+                                <h2 class="font-editorial-title text-lg font-semibold text-stone-900 dark:text-stone-100 group-hover:text-editorial-accent dark:group-hover:text-editorial-accentDark transition-colors line-clamp-2 leading-snug" x-text="article.title"></h2>
+
+                                <p class="text-xs text-stone-500 dark:text-stone-400 line-clamp-3 italic leading-relaxed font-serif" x-text="'「' + article.quote + '」'"></p>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="px-6 pb-6 pt-2 border-t border-stone-100 dark:border-stone-800/60 flex items-center justify-between text-xs">
+                            <!-- Tags -->
+                            <div class="flex flex-wrap gap-1">
+                                <template x-for="t in article.tags.slice(0, 2)" :key="t">
+                                    <span @click.stop="selectedTag = t" class="text-[10px] text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded" x-text="'#' + t"></span>
+                                </template>
+                            </div>
+
+                            <!-- Read Button -->
+                            <button @click="openArticleModal(article)" class="font-medium text-editorial-accent dark:text-editorial-accentDark flex items-center space-x-1 group-hover:translate-x-1 transition-transform">
+                                <span>閱讀全文</span>
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </button>
+                        </div>
+                    </article>
+                </template>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- IMMERSIVE ARTICLE MODAL -->
+    <div x-show="modalOpen" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6"
+         style="display: none;"
+         @keydown.escape.window="modalOpen = false">
+        
+        <div @click.away="modalOpen = false" 
+             class="bg-cream-50 dark:bg-editorial-dark border editorial-border w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl relative max-h-[92vh] flex flex-col">
+            
+            <!-- Modal Header Actions -->
+            <div class="sticky top-0 z-20 flex items-center justify-between px-6 py-4 bg-cream-50/90 dark:bg-editorial-dark/90 backdrop-blur-md border-b editorial-border">
+                <div class="flex items-center space-x-3 text-xs">
+                    <span class="bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 px-3 py-1 rounded-full font-medium uppercase tracking-wider" x-text="activeArticle?.category"></span>
+                    <span class="text-stone-400" x-text="activeArticle?.date"></span>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <!-- Heart button in modal -->
+                    <button @click="toggleBookmark(activeArticle?.id)" class="p-2 text-stone-600 dark:text-stone-300 hover:text-rose-500 transition-colors" title="收藏文章">
+                        <i class="fa-solid fa-heart text-lg" :class="isBookmarked(activeArticle?.id) ? 'text-rose-500' : ''"></i>
+                    </button>
+                    
+                    <!-- Share / Copy Link -->
+                    <button @click="copyLink()" class="p-2 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors" title="分享連結">
+                        <i class="fa-solid fa-share-nodes text-lg"></i>
+                    </button>
+
+                    <!-- Close button -->
+                    <button @click="modalOpen = false" class="p-2 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition-colors" title="關閉 (Esc)">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body (Scrollable Reader) -->
+            <div class="p-6 sm:p-10 overflow-y-auto space-y-8 text-stone-800 dark:text-stone-200">
+                
+                <!-- Article Title & Subtitle Banner -->
+                <div class="space-y-4 border-b editorial-border pb-6">
+                    <h1 class="font-editorial-title text-2xl sm:text-4xl font-bold leading-tight text-stone-900 dark:text-stone-50" x-text="activeArticle?.title"></h1>
+                    
+                    <!-- Key Quote Callout -->
+                    <div class="p-4 rounded-xl bg-stone-100 dark:bg-stone-800/60 border-l-4 border-editorial-accent dark:border-editorial-accentDark italic font-serif text-sm sm:text-base text-stone-700 dark:text-stone-300">
+                        <p x-text="'「' + activeArticle?.quote + '」'"></p>
+                    </div>
+
+                    <!-- Meta details strip -->
+                    <div class="flex flex-wrap items-center justify-between text-xs text-stone-500 dark:text-stone-400 gap-2 pt-2">
+                        <div class="flex items-center space-x-4">
+                            <span><i class="fa-solid fa-user-pen mr-1"></i>作者：Jane Lee</span>
+                            <span><i class="fa-regular fa-clock mr-1"></i>閱讀時間：<span x-text="activeArticle?.readTime"></span></span>
+                        </div>
+                        <div x-show="activeArticle?.rating" class="flex items-center space-x-1 text-amber-500">
+                            <i class="fa-solid fa-star"></i>
+                            <span class="font-bold text-stone-800 dark:text-stone-200" x-text="activeArticle?.rating + ' / 5.0'"></span>
+                            <span class="text-stone-400 text-[10px] ml-1">(推薦指數)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cover Image -->
+                <div class="rounded-xl overflow-hidden max-h-[400px]">
+                    <img :src="activeArticle?.coverImage" :alt="activeArticle?.title" class="w-full h-full object-cover">
+                </div>
+
+                <!-- Article Rich Content Body -->
+                <div class="prose dark:prose-invert max-w-none space-y-6 text-sm sm:text-base leading-relaxed font-sans font-light drop-cap" x-html="activeArticle?.content">
+                </div>
+
+                <!-- Tags & Engagement Footer -->
+                <div class="pt-8 border-t editorial-border space-y-4">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs text-stone-400 font-serif">文章標籤：</span>
+                        <template x-for="tag in activeArticle?.tags || []" :key="tag">
+                            <span class="px-3 py-1 bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs rounded-full" x-text="'#' + tag"></span>
+                        </template>
+                    </div>
+
+                    <!-- Author Callout Box inside Modal -->
+                    <div class="p-4 rounded-xl bg-cream-100 dark:bg-editorial-cardDark border editorial-border flex items-center space-x-4">
+                        <!-- 【圖片位置 2】：文章彈窗內 - 作者頭像 (可替換 src 網址) -->
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" class="w-12 h-12 rounded-full object-cover">
+                        <div class="text-xs">
+                            <h4 class="font-semibold text-stone-900 dark:text-stone-100">Jane Lee</h4>
+                            <p class="text-stone-500 dark:text-stone-400">感謝閱讀本篇筆記。歡迎透過信箱 <a href="mailto:lee39902@gmail.com" class="underline text-editorial-accent">lee39902@gmail.com</a> 或 Instagram <a href="https://instagram.com/mezhism" target="_blank" class="underline text-editorial-accent">@mezhism</a> 與我交流。</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="mt-20 border-t editorial-border bg-cream-100/60 dark:bg-editorial-cardDark/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                
+                <!-- Col 1: Brand & Bio -->
+                <div class="md:col-span-5 space-y-4">
+                    <a @click="resetFilters()" href="#" class="inline-block">
+                        <span class="font-brand text-2xl tracking-[0.25em] font-bold text-stone-900 dark:text-stone-100">mezhism</span>
+                    </a>
+                    <p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed max-w-sm">
+                        時尚簡約、深具特色的個人文字空間。匯集電影心得、散文導讀、展覽側記與生活隨筆，紀錄時代變化與個體微光。
+                    </p>
+                    <p class="text-[11px] text-stone-400">
+                        &copy; 2026 mezhism / Author Jane Lee. All rights reserved.
+                    </p>
+                </div>
+
+                <!-- Col 2: Navigation Links -->
+                <div class="md:col-span-3 space-y-3">
+                    <h4 class="font-serif text-sm font-semibold tracking-wider text-stone-900 dark:text-stone-100 uppercase">板塊分類</h4>
+                    <ul class="space-y-2 text-xs text-stone-600 dark:text-stone-400">
+                        <template x-for="cat in ['電影心得', '散文導讀', '展覽側記', '生活隨筆']" :key="cat">
+                            <li>
+                                <a href="#" @click.prevent="activeCategory = cat; window.scrollTo({top:0, behavior:'smooth'})" class="hover:text-editorial-accent transition-colors" x-text="cat"></a>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Contact & Socials -->
+                <div class="md:col-span-4 space-y-3">
+                    <h4 class="font-serif text-sm font-semibold tracking-wider text-stone-900 dark:text-stone-100 uppercase">聯絡與追蹤</h4>
+                    <div class="space-y-2 text-xs text-stone-600 dark:text-stone-400">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-regular fa-envelope text-editorial-accent dark:text-editorial-accentDark text-sm"></i>
+                            <a href="mailto:lee39902@gmail.com" class="hover:underline">lee39902@gmail.com</a>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-brands fa-instagram text-editorial-accent dark:text-editorial-accentDark text-sm"></i>
+                            <a href="https://instagram.com" target="_blank" class="hover:underline">IG: @mezhism</a>
+                        </div>
+                    </div>
+
+                    <!-- Scroll to Top button -->
+                    <div class="pt-4">
+                        <button @click="window.scrollTo({top: 0, behavior: 'smooth'})" class="inline-flex items-center space-x-2 text-xs text-stone-500 hover:text-stone-900 dark:hover:text-stone-100 transition-colors">
+                            <span>返回頁首</span>
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </footer>
+
+    <!-- ALPINE JS DATA SCRIPT -->
+    <script>
+        function appData() {
+            return {
+                darkMode: localStorage.getItem('mezhism_theme') === 'dark',
+                activeCategory: '全部',
+                selectedTag: '',
+                searchQuery: '',
+                searchOpen: false,
+                mobileMenuOpen: false,
+                modalOpen: false,
+                activeArticle: null,
+                bookmarks: JSON.parse(localStorage.getItem('mezhism_bookmarks') || '[]'),
+                toast: { show: false, message: '', icon: '' },
+
+                categories: ['全部', '電影心得', '散文導讀', '展覽側記', '生活隨筆'],
+
+                allTags: ['時代記憶', '無名者', '女性凝視', '美學思考', '孤獨與愛', '青春夢想', '琦君', '鍾怡雯', '林文月', '當代藝術', '留白美學', '日常隨記'],
+
+                articles: [
+                    {
+                        id: 'm1',
+                        category: '電影心得',
+                        title: '時代至暗處的一抹微光：從《大濛》看見無名者的勇敢與良心',
+                        quote: '渴望變成雲朵的小水滴，即便最終只凝結成霧，也是一種值得被銘記的風景。',
+                        date: '2026.03.15',
+                        readTime: '6 min',
+                        rating: '4.9',
+                        tags: ['時代記憶', '無名者', '台灣電影', '歷史重現'],
+                        
+                        // 【圖片位置 3】：文章封面圖片網址 (只需替換單引號內的圖片網址即可)
+                        coverImage: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1200&q=80',
+                        
+                        // 【圖片位置 4】：內文照片插入範例 - 可直接在 content HTML 字串中寫入 <img> 標籤
+                        content: `
+                            <p class="drop-cap">在絕望與無力籠罩的日常裡，因為一部作品，我重新走進了這片土地上曾經真實發生的至暗時刻。</p>
+                            
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">一、 轉動指針：那是苦難時代裡，集體的信念與希望</h3>
+                            <p>逃亡途中的育雲，眼神在模糊的塵土下亮得驚人。他留給妹妹阿月一隻手錶，並說下那段指針定律：「如果覺得現在太艱難，就轉動指針，想像未來的光景。困難都會過去的，會有好日子的……」</p>
+                            
+                            <!-- 內文配圖範例 -->
+                            <figure class="my-6">
+                                <img src="https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1000&q=80" alt="電影劇照與劇照側記" class="w-full rounded-xl object-cover shadow-sm">
+                                <figcaption class="text-xs text-center text-stone-400 mt-2 font-serif italic">劇照側記：轉動指針的時刻</figcaption>
+                            </figure>
+
+                            <p>這不僅是兄妹間的約定，更是那個糟糕時代下，台灣人唯一的集體信念。觀影時我無數次捫心自問：若是身處那樣苦痛難耐的歲月，我們該如何撐下去？但當時的人們別無選擇，唯有勇氣。他們腳下的活路，是一步步實實在在走出來的。</p>
+                            <p>電影多次重現阿月轉動指針、暢想未來的片段。直到畫面轉向現代——阿月真的成為了老師，結婚生子、當上奶奶，在我們無比熟悉的現代生活裡述說著過往。那一刻，累積的情緒瞬間潰堤。這不再是遙遠的歷史課本，而是我們身邊長輩確實咬牙走過的世界。阿月用堅忍與勇敢證明：她真的做到了。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 壞世道裡的良心：趙公道的無奈與堅守</h3>
+                            <p>「我不是一個好人，但我有良心。」當趙公道對當舖的人說出這句話時，道盡了大時代下小人物的無奈。</p>
+                            <p>他不是完美無瑕的英雄。他會因為承受不住酷刑而供出兄弟，卻也會為了守住承諾，拼死將兄弟的遺指帶回故鄉；多年後在醫院重逢，他遞出的手錶雖已非當年那隻，卻依然找了最相似的樣式。</p>
+                            <p>對阿月而言，手錶是對未來的寄託與對兄長的懷想；對趙公道而言，那隻錶則是惦念，是他在濁世裡未曾泯滅的良心。在漫長的黑夜裡，能守住這一點良心，就已經是個極好極好的人了。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">三、 不成雲，便化為霧：給所有無名者的溫柔情書</h3>
+                            <p>生命的最後，育雲寫下了一封截然不同的家書：故事裡的水滴沒有成功變成雲朵，而是凝結成霧，化為一道風景後悄然散去。</p>
+                            <p>這段話，解開了我對本片結構的疑惑。這看似只是一個小女孩尋找兄長遺體的故事，實則是從最平凡的微觀視角，展開大時代的歷史敘事。在宏大的歷史書寫中，我們常忘了那些若有似無的薄霧——許多懷抱熱血的志士渴望成為革命的雲彩，最終卻事未竟成，化為歷史長河裡的一片濛霧。可即便只是濛霧，也是一種風景，也值得被溫柔銘記。這正是《大濛》的核心用意。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">四、 最平凡的切角，最深刻的力量</h3>
+                            <p>電影最動人之處，在於選擇了阿月的視角。她不懂複雜的政治立場，不理解政府為何要處決善良的哥哥，甚至在艱苦的生活中不曾埋怨世界，只是默默地、堅強地一步步往前走。</p>
+                            <p>相較於激烈的立場對立或民粹煽動，《大濛》用這種極其溫柔且樸實的切角，讓觀眾在哀傷之中，依然能感受到直擊人心的希望與勇敢。</p>
+                        `
+                    },
+                    {
+                        id: 'm2',
+                        category: '電影心得',
+                        title: '凝視、慾望與自我吞噬《懼裂》—— 我們對自己究竟能有多殘忍？',
+                        quote: '身為女人，我有一樣的煩惱；身為人類，我具有相似的劣根性。',
+                        date: '2026.03.10',
+                        readTime: '5 min',
+                        rating: '4.8',
+                        tags: ['女性凝視', '美學思考', '身體恐怖', '當代人性'],
+                        coverImage: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=1200&q=80',
+                        content: `
+                            <p class="drop-cap">《懼裂》雖然是一部極端且超現實的身體恐怖片，但它所刺痛的，卻是我們每天在鏡子前最真實的掙扎。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">一、 堆疊的睫毛與塗抹的口紅：對「想要更美」的無盡追求</h3>
+                            <p>在這個「服美役」的時代，人們對美的標準愈漸嚴苛。看著化妝台上琳瑯滿目的彩妝時，心中總有一個聲音說著：「今天如果能更美地出門就好了。」化妝比不化妝美、睫毛夾翹比沒刷更靈動、有了口紅與臥蠶，整個人便有了精神。每一個完妝的背後，都是一層又一層對「美」的無盡追求。</p>
+                            <p>正因如此，儘管《懼裂》的故事設定荒誕極端，我卻能完美共感主角伊莉莎白內心的每一次痛苦與掙扎。當鏡頭赤裸地掃視著母體與分體，我的第一個念頭竟也是：「時間帶來的變化，真的有差。」隨後，我被自己的想法所震驚——原來我也正在凝視女人的身體，正在比較、羨慕與嫉妒。</p>
+                            <p>即便那是「曾經的自己」又如何？我們不也常懷念或渴望某個特定時期的自己嗎？這種慾望不僅限於女性的外貌，而是人性最本能的貪婪：對未竟之事的追求，對已逝之物的執念，永遠無邊無際。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 熬夜與透支的日常：人對自己能有多殘忍？</h3>
+                            <p>隨著劇情推進，分體「蘇」不再滿足於七天一換的規則。她貪婪地延長使用年輕身體的時間，即便知道這會導致母體加速衰老、器官壞死，也在所不惜。</p>
+                            <p>這聽起來荒謬至極——怎麼會有人為了貪戀一時的青春，而親手將自己推入無法挽回的絕境？然而，這看似誇張的藝術手法，卻真實地發生在我們的日常中。每一次關燈滑手機的深夜、每一次明知故犯的熬夜與暴飲暴食，我們不都在做著一模一樣的事嗎？我們既希望未來的自己過得好，又無法約束當下的慾望。我們對自身的剝削與不負責任，在電影裡被剖析得淋漓盡致。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">三、 得到後的失去：落差感，是殺死自己的毒藥</h3>
+                            <p>「明明你已經很美了呀？」「50幾歲能保養成長這樣，已經比同齡人好太多了！」旁人輕巧的安慰，根本無法撫平伊莉莎白內心的崩潰。因為只有她自己最清楚，曾經的她有多麼輝煌、多麼受人追捧。她嫉妒著曾經的自己，那種「得到後再失去」的落差感，成為了最致命的毒藥。</p>
+                            <p>電影結尾出現的畸怪變體，在舞台上聲嘶力竭地喊著：「我是伊莉莎白！我是蘇！我就是我啊！」那一幕，成了最沉重的控訴。我就是我啊，為什麼你們不再愛我了？難道只有年輕貌美，才是一個女人唯一的價值嗎？</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">四、 結語：一場獻給現代人的警世寓言</h3>
+                            <p>《懼裂》用最血腥撕裂的視覺語言，撕開了當代社會對女性身體的凝視，也血淋淋地呈現了人類在慾望面前的失控與自殘。它不僅是一部讓觀者坐立難安的恐怖片，更是一面極度殘忍卻又無比真實的鏡子，照出了我們每個人內心深處，那個永遠無法被滿足的自己。</p>
+                        `
+                    },
+                    {
+                        id: 'm3',
+                        category: '電影心得',
+                        title: '如果沒有遇見你，我的生命將是一場永無止盡的自溺《一個巨星的誕生》',
+                        quote: '他像是一個不會游泳的人，卻誕生在水中，音樂是唯一的浮木。而當浮木消失，他只能任由生命下沉……',
+                        date: '2026.02.28',
+                        readTime: '5 min',
+                        rating: '4.7',
+                        tags: ['孤獨與愛', '音樂電影', '創傷復原', '宿命感'],
+                        coverImage: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1200&q=80',
+                        content: `
+                            <p class="drop-cap">很多人在這部電影中看見新星的升起，我看到的，卻是一個時代巨星帶著終身未解的創傷，優雅而殘酷地隕落。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">一、 頹敗又性感：讓人無法不心動的深淵</h3>
+                            <p>Ally 初次在酒吧遇到 Jackson 時，他就是個徹頭徹尾的酒鬼。明明說著討厭酒鬼，Ally 卻依然無法拒絕他的邀約。Jackson 身上縈繞著一種極致的氛圍——頹敗、性感、才華洋溢、有名氣卻又無比痛苦。當這樣一個神秘又破碎的人，用極盡溫柔的眼神凝視著你，不吝讚美、肯定並欣賞你的才華時，任何人都無法不心動。那是深淵的誘惑，也是兩個孤獨靈魂在混亂世界裡的第一次碰撞。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 溺水者的自救：從 13 歲就未曾離開的陰影</h3>
+                            <p>這部電影最殘忍的刻畫，在於 Jackson 的情緒轉折與精神掙扎。他就像一個天生不會游泳、卻被拋進深水區的人。音樂是他賴以生存的浮木，而 Ally 的出現，是他第一次萌生「或許可以試著游上岸」的求生意志。在勒戒所游泳的那段日子，是他嘗試自我救贖的清醒時刻。</p>
+                            <p>然而，解不開的結從未消失。Jackson 自卑、缺愛、暴躁且偏執，而兩人之間缺乏真正有效溝通的宿命，隨時都在堵塞這段關係。最後，他選擇用 13 歲那年曾試過的方式結束生命。那是他最深沉的控訴——他從未真正走出 13 歲那年的陰影。那道創傷如影隨形地伴隨了他一生，最終還是將他帶向了不可逆的終局。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">三、 舊時代的歌者與新流行的衝突</h3>
+                            <p>電影的暗線，其實寫下了流行音樂文化的世代交替。Jackson 代表著純粹、土根、注重靈魂與吉他咆哮的舊時代搖滾；而 Ally 則逐漸被商業體制包裝，走向精密計算的現代 POP 流行樂。他們都熱愛音樂，卻以完全不同的方式在表達。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">四、 結語：被漫溢的愛包圍，就能不感到孤寂嗎？</h3>
+                            <p>「我不想回家。」——電影開場僅三分鐘的這句台詞，重重地砸在心上。當萬人狂歡散去，旁人關心的或許只是舞台上的光鮮，沒人在乎你真正的情緒與痛苦。《一個巨星的誕生》留下的不是浪漫的愛情神話，而是一首寫給所有孤獨靈魂的悲歌。</p>
+                        `
+                    },
+                    {
+                        id: 'm4',
+                        category: '電影心得',
+                        title: '《搖滾青春戀習曲》：沒有人能對這部電影說不，就像我們無法輕易拒絕青春、夢想和愛',
+                        quote: '就好像你越不了解某個人，對他越感興趣，他可以是你心中的任何人……',
+                        date: '2026.02.14',
+                        readTime: '4 min',
+                        rating: '5.0',
+                        tags: ['青春夢想', '搖滾樂', '浪漫主義'],
+                        coverImage: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=1200&q=80',
+                        content: `
+                            <p class="drop-cap">電影沒有給出終點的答案，他們只帶著才華就踏上了前往遠方的船。但夢想正要啟程，未來無法預計，我們只能在乘風破浪途中不斷確認自己的心。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">一、 青春、夢想與愛：最切合靈魂的譯名</h3>
+                            <p>台灣將 Sing Street 譯為《搖滾青春戀習曲》，精準對應了「青春、夢想與愛情」。這部作品沒有沉重的說教，只有最純粹的快樂。雖然搖滾樂本質上帶有反叛底色，本片卻用一種極其樂觀理想的筆觸，描繪了一段青春物語。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 音樂裡的演變：從怯生生到堅毅閃耀</h3>
+                            <p>男主角 Cosmo 從一開始的怯弱迷惘，到後來的堅毅閃耀，那是音樂真實作用於靈魂上的痕跡。「我不知道自己是誰，這算不算是一種悲喜交加？」在尋找自我的過程中，創作成了最好的解答。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">三、 愛是被打動：當你為一首歌而流淚</h3>
+                            <p>電影中最令人印象深刻的一幕，是雷菲娜聽著 Cosmo 的音樂時，眼眶裡悄然滑落的淚水。一個男孩為了打動一個女孩而組建樂團——愛的本質，或許正是「被打動」。當旋律響起的瞬間，所有的防備與偽裝都被撕開，只剩下最真實的情感共振。</p>
+                        `
+                    },
+                    {
+                        id: 'e1',
+                        category: '展覽側記',
+                        title: '歷史的結舌：當影像喧賓奪主，我們如何透過「留白」修復真實？',
+                        quote: '薄薄的一張白紙上，紀錄的是密密麻麻的沉重歷史。當歷史影像因定格而僵化，留白反而成了引導我們接近真實的引子。',
+                        date: '2026.03.01',
+                        readTime: '6 min',
+                        rating: '4.9',
+                        tags: ['當代藝術', '留白美學', '媒介思考', '歷史影像'],
+                        coverImage: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
+                        content: `
+                            <p class="drop-cap">從德國歷史節點的紙模型重構，到當代傳播媒介的奇觀反思——這是一場關於「載體、影像與認知」的深度叩問。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">一、 刪去立場的留白：紙模型裡的歷史修復軌跡</h3>
+                            <p>藝術家採用 1:1 紙模型重建歷史場景並進行攝影，表面上是重現歷史，實則是在質疑「歷史的真實性」。展覽中大量的「空白」，展現出一種極具東方美學意涵的留白。這種留白，是一種「刪去立場」的呈現。</p>
+                            <p>它不直接給予死板的單一答案，而是留出彈性空間，誘發觀看者主動去好奇、搜尋並拼湊多面向的史料。在這個主動探索的過程中，觀眾才真正開始接近歷史的本質。「紙」作為貫穿全展的核心載體，在不同身分與場景下，承載了截然不同的情感重量與權力關係。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 喧賓奪主的影像：傳播媒介下的現代認知文明病</h3>
+                            <p>隨著科技發展，影像流通變得極其便利，但圖像的存在感卻逐漸超過了事件本身。原本為了「還原事實」而存在的影像，如今卻喧賓奪主。大眾的注意力被強烈的情感刺激所轉移，不再關心事件背後的本質。傳播媒介紀錄並散播了歷史，卻也在無形中加速了集體記憶的遺忘與碎片化。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">三、 從垃圾到符號：囤積物在美術館裡的場域重構</h3>
+                            <p>展覽中另一件關於「囤物症父親」的作品，提供了看待當代藝術的全新視角。積年累月堆放在家中的陳年舊書，當被搬移至美術館空間時，便從生活的「垃圾」昇華為詮釋「囤積癖」的符號象徵，創造出遠超於物件本身的藝術價值。</p>
+                        `
+                    },
+                    {
+                        id: 'p1',
+                        category: '散文導讀',
+                        title: '《紅紗燈》：舊時溫熱的光，照亮向未來邁進的勇氣',
+                        quote: '懷念以前與展望未來並不衝突，帶著過往舊事一路前行的自己，才更加完整。',
+                        date: '2026.01.20',
+                        readTime: '4 min',
+                        rating: '4.8',
+                        tags: ['琦君', '記憶與愛', '古典散文'],
+                        coverImage: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80',
+                        content: `
+                            <p class="drop-cap">在琦君溫潤平淡的文字裡，我看見童年的記憶如何被塵封成一道光，在每個迷惘不安的當下，給予我們撫平挫折的溫柔力量。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">一、 記憶的載體：讓當下的美好延續</h3>
+                            <p>舊照片、髮髻、算盤、高跟鞋，乃至那一盞紅紗燈……琦君將成長過程中珍藏的記憶細心封存。這些平凡物件就像是一座座橋樑，讓發生於當下的美好時光得以延續，成為向未來邁進時最堅定的基底。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 懷舊不是止步不前，而是前行的勇氣</h3>
+                            <p>「拂不去舊事，給予我更多的信心和毅力。」曾以為總愛懷想過去的自己是沉溺於舊夢；讀完《紅紗燈》才豁然開朗——懷念過去與展望未來從不衝突。無論好壞，那些過往都將拼貼成人生中最美的畫作。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">三、 記憶的永恆：在平凡的碎片裡動容</h3>
+                            <p>習慣用日記與鏡頭記錄日常的我，翻閱備忘錄與舊照片時，仍會為那些看似平凡的瑣碎小事而落淚。即使有些人已不再相見，但深刻感動的那一刻，記憶便已成永恆。</p>
+                        `
+                    },
+                    {
+                        id: 'p2',
+                        category: '散文導讀',
+                        title: '《聽說》：聽路燈的低語，看時光與謠言的喧囂',
+                        quote: '相較於謠言的誇飾與華麗，事實往往蒼白而無趣。但在鍾怡雯靈動的筆下，萬物皆有靈魂。',
+                        date: '2026.01.12',
+                        readTime: '4 min',
+                        rating: '4.6',
+                        tags: ['鍾怡雯', '言語重量', '生活觀察'],
+                        coverImage: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80',
+                        content: `
+                            <p class="drop-cap">走進鍾怡雯創造的散文世界，在想像力與生活觀察的交織中，重新審視流言蜚語的重量，以及被我們虛擲的成長光陰。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">一、 丟失的想像力：萬物皆有靈的靈動世界</h3>
+                            <p>路燈會老、鑰匙會逃走、跳蚤會留下吻痕……鍾怡雯用大膽且充滿詩意的語言，賦予了日常平凡事物全新的靈魂。這本書提醒了我們：丟失的童年與想像力，終究要靠我們自己找回來。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 「聽說」的重量：舌尖上的謠言與人言可畏</h3>
+                            <p>在〈聽說〉一文中，作者剖析了身處流言風暴中央的無奈。幾張愛嚼舌根的嘴，就能將微小的無意之言滾成雪球般的「事實」。真相往往顯得蒼白，那些漫天飛舞的「聽說」，是足以將人壓垮的力量。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">三、 急於長大的陷阱：不要將時間埋葬於等待</h3>
+                            <p>孩提時急於邁入「大人世界」；直到驀然回首，才發覺自己將多少寶貴的時間，埋葬在了「等待未來到達」的過程裡。好好體會當下的靈動，生活才能隨處趣味盎然。</p>
+                        `
+                    },
+                    {
+                        id: 'p3',
+                        category: '散文導讀',
+                        title: '《擬古》：擬前人詩文，寫現代人心事的跨時代對話',
+                        quote: '套用經典的筆法，注入現代生活的靈魂。在古今對照的文字對話中，我看見了時代顛沛的無奈。',
+                        date: '2025.12.28',
+                        readTime: '5 min',
+                        rating: '4.7',
+                        tags: ['林文月', '古今對話', '手寫信'],
+                        coverImage: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=1200&q=80',
+                        content: `
+                            <p class="drop-cap">林文月以十四篇擬古散文，示範了何謂「擬古而不拘泥於古」。在古典架構與現代思想的碰撞下，展開一場跨越歷史的文學盛典。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">一、 跨越時空的共鳴：歷史課本背後的血淚</h3>
+                            <p>從〈江灣路憶往〉中窺見動盪政局裡人民如浮萍般的顛沛流離。那些印在課本上的歷史名詞，背後包含了多少真實生活者的痛苦與壓抑？深刻銘記前人換來的平靜，我們才能珍惜和平歲月的可貴。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">二、 紙短情長：通訊軟體時代下的手寫溫柔</h3>
+                            <p>林文月與子女透過書信聯繫，字裡行間流露著深沉關懷。在這個通訊軟體飛速發展的時代，等待一封信的過程顯得格外漫長，卻也帶有數位螢幕無法替代的溫度。</p>
+
+                            <h3 class="text-lg font-serif font-semibold text-stone-900 dark:text-stone-100 mt-6 mb-2">三、 醫院裡的生命百態：無能為力時的悲憫</h3>
+                            <p>在〈你終於走了，孩子〉中，記錄了十一歲男孩面對病痛的悲劇。年輕生命的殞落令人心碎，也道出了人在面對絕望時的渺小與無力。</p>
+                        `
+                    },
+                    {
+                        id: 'j1',
+                        category: '生活隨筆',
+                        title: '漫長清晨與一盞咖啡：在喧囂時代尋找留白的情節',
+                        quote: '文字是我側錄生活的底片，每一刻不完美的留白，都成了最珍貴的日常紀錄。',
+                        date: '2026.03.18',
+                        readTime: '3 min',
+                        rating: '5.0',
+                        tags: ['日常隨記', '留白美學', '美學思考'],
+                        coverImage: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
+                        content: `
+                            <p class="drop-cap">晨光透過紗簾灑在書桌上，手沖咖啡的香氣漸漸瀰漫開來。在資訊爆炸的節奏裡，我習慣為自己留下這一段安靜的晨間時光。</p>
+                            <p>很多人問我，為什麼在快節奏的當代還要堅持寫長文筆記？因為在碎片的短影音與即時訊息中，我們的感知往往變得麻木。寫下文字的過程，就像是將心靈洗刷乾淨，讓對電影、書籍與展覽的思考能夠扎實沉澱。</p>
+                            <p>這裡是我記錄美學與心事的棲息地，願每一個來到 mezhism 的你，也能在文字中找到共鳴與平靜。</p>
+                        `
+                    }
+                ],
+
+                get filteredArticles() {
+                    return this.articles.filter(article => {
+                        // Category filter
+                        if (this.activeCategory === '我的收藏') {
+                            if (!this.bookmarks.includes(article.id)) return false;
+                        } else if (this.activeCategory !== '全部' && article.category !== this.activeCategory) {
+                            return false;
+                        }
+
+                        // Tag filter
+                        if (this.selectedTag && !article.tags.includes(this.selectedTag)) {
+                            return false;
+                        }
+
+                        // Keyword Search
+                        if (this.searchQuery.trim() !== '') {
+                            const q = this.searchQuery.toLowerCase();
+                            const matchTitle = article.title.toLowerCase().includes(q);
+                            const matchQuote = article.quote.toLowerCase().includes(q);
+                            const matchContent = article.content.toLowerCase().includes(q);
+                            const matchTags = article.tags.some(t => t.toLowerCase().includes(q));
+                            return matchTitle || matchQuote || matchContent || matchTags;
+                        }
+
+                        return true;
+                    });
+                },
+
+                toggleTheme() {
+                    this.darkMode = !this.darkMode;
+                    localStorage.setItem('mezhism_theme', this.darkMode ? 'dark' : 'light');
+                },
+
+                toggleBookmark(id) {
+                    if (!id) return;
+                    if (this.bookmarks.includes(id)) {
+                        this.bookmarks = this.bookmarks.filter(bId => bId !== id);
+                        this.showToast('已從個人收藏移除', 'fa-heart-crack');
+                    } else {
+                        this.bookmarks.push(id);
+                        this.showToast('已加入個人收藏', 'fa-heart');
+                    }
+                    localStorage.setItem('mezhism_bookmarks', JSON.stringify(this.bookmarks));
+                },
+
+                isBookmarked(id) {
+                    return this.bookmarks.includes(id);
+                },
+
+                openArticleModal(article) {
+                    this.activeArticle = article;
+                    this.modalOpen = true;
+                },
+
+                resetFilters() {
+                    this.activeCategory = '全部';
+                    this.selectedTag = '';
+                    this.searchQuery = '';
+                    this.searchOpen = false;
+                },
+
+                copyLink() {
+                    const dummy = document.createElement('input');
+                    document.body.appendChild(dummy);
+                    dummy.value = window.location.href;
+                    dummy.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(dummy);
+                    this.showToast('文章連結已複製至剪貼簿', 'fa-link');
+                },
+
+                showToast(msg, icon) {
+                    this.toast.message = msg;
+                    this.toast.icon = icon || 'fa-circle-check';
+                    this.toast.show = true;
+                    setTimeout(() => {
+                        this.toast.show = false;
+                    }, 2500);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
